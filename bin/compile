@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+set -o errexit    # always exit on error
+set -o pipefail   # don't ignore exit codes when piping output
+set -o nounset    # fail on unset variables
+
+### Configure directories
+
+BUILD_DIR=${1:-}
+CACHE_DIR=${2:-}
+ENV_DIR=${3:-}
+BP_DIR=$(cd "$(dirname "${0:-}")"; cd ..; pwd)
+
+[ -f $BUILD_DIR/yarn.lock ] && use_yarn=true || use_yarn=false
+
+export_env_dir() {
+  whitelist_regex=${2:-''}
+  blacklist_regex=${3:-'^(PATH|GIT_DIR|CPATH|CPPATH|LD_PRELOAD|LIBRARY_PATH)$'}
+  if [ -d "$ENV_DIR" ]; then
+    for e in $(ls $ENV_DIR); do
+      echo "$e" | grep -E "$whitelist_regex" | grep -qvE "$blacklist_regex" &&
+      export "$e=$(cat $ENV_DIR/$e)"
+      :
+    done
+  fi
+}
+
+echo "-----> Exporting ENV variables"
+export_env_dir
+
+echo "-----> Copying scripts to application slug"
+mkdir -p $BUILD_DIR/haaf/lib
+cp $BP_DIR/index.js $BUILD_DIR/haaf/index.js
+cp $BP_DIR/package.json $BUILD_DIR/haaf/package.json
+cp -r $BP_DIR/lib/* $BUILD_DIR/haaf/lib/
+
+cd $BUILD_DIR/haaf
+if $use_yarn; then
+  yarn install --no-lockfile
+else
+  npm install
+fi

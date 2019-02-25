@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+if grep -q heroku-as-a-function "$1/package.json"; then
+  echo "Heroku as a Function"
+  exit 0
+else
+  exit 1
+fi

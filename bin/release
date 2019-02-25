@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# bin/compile <build-dir> <cache-dir> <env-dir>
+
+cat << EOF
+---
+default_process_types:
+  web: node haaf/index.js
+EOF
